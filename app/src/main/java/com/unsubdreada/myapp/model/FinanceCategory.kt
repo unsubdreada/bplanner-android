@@ -28,7 +28,7 @@ enum class FinanceCategory(
     PRODUCTS("Продукты", TablerPizza, Color(0xFFE57373), false),
     CAFE("Кафе и рестораны", TablerCoffee, Color(0xFFA1887F), false),
     TRANSPORT("Транспорт", TablerCar, Color(0xFF4DD0E1), false),
-    HOUSING("ЖКХ и дом", TablerHome2, Color(0xFFFFB74D), false),
+    HOUSING("ЖКХ и Дом", TablerHome2, Color(0xFFFFB74D), false),
     HEALTH("Здоровье", TablerRibbonHealth, Color(0xFF81C784), false),
     CLOTHES("Одежда", TablerShirt, Color(0xFFBA68C8), false),
     ENTERTAINMENT("Развлечения", TablerRollercoaster, Color(0xFFF06292), false),

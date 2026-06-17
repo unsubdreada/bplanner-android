@@ -231,7 +231,7 @@ fun Header(
                                     IconButton(
                                         onClick = {
                                             onSortClick()
-                                        } // TODO: Открытие шторки
+                                        }
                                     ) {
                                         Icon(
                                             imageVector = TablerArrowsSort,

@@ -44,6 +44,7 @@ import java.util.Locale
 @Composable
 fun TransactionItem(
     transaction: TransactionEntity,
+    category: FinanceCategory,
     isSelectedMode: Boolean,
     onLongClick: () -> Unit,
     onClick: () -> Unit
@@ -63,11 +64,7 @@ fun TransactionItem(
     } else {
         TablerChecks
     }
-
-    val categoryObject =
-        runCatching { FinanceCategory.valueOf(transaction.category) }
-            .getOrElse { FinanceCategory.OTHER_EXP }
-
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -87,16 +84,16 @@ fun TransactionItem(
                     .fillMaxSize()
                     .background(
                         if (!isSelectedMode) {
-                            categoryObject.color
+                            category.color
                         } else {
-                            categoryObject.color.copy(alpha = 0.5f)
+                            category.color.copy(alpha = 0.5f)
                         }
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = if (!isSelectedMode) {
-                        categoryObject.icon
+                        category.icon
                     } else {
                         TablerCheck
                     },
@@ -112,7 +109,7 @@ fun TransactionItem(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = categoryObject.title,
+                text = category.title,
                 fontSize = 18.sp,
                 color = TextPrimary
             )
