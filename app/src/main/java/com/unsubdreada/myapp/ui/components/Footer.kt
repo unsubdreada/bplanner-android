@@ -17,10 +17,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -32,13 +28,15 @@ import com.unsubdreada.myapp.ui.theme.BlurredPanelBackground
 import com.unsubdreada.myapp.ui.theme.TextSecondary
 
 @Composable
-fun Footer() {
+fun Footer(
+    selectedItem: Int,
+    onTabSelected: (Int) -> Unit
+) {
     val items = listOf(
         "История" to TablerHistory,
         "График" to TablerChartBar,
         "Настройки" to TablerSettings
     )
-    var selectedItem by remember { mutableIntStateOf(0) }
 
     Surface(
         modifier = Modifier
@@ -60,7 +58,7 @@ fun Footer() {
 
                 NavigationBarItem(
                     selected = isSelected,
-                    onClick = { selectedItem = index },
+                    onClick = { onTabSelected(index) },
                     label = {
                         Text(
                             text = title,

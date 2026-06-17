@@ -195,7 +195,9 @@ fun Header(
                             colors = TextFieldDefaults.colors(
                                 unfocusedContainerColor = InputFieldBackground,
                                 unfocusedPlaceholderColor = TextSecondary,
-                                focusedTextColor = Color.Black,
+                                focusedContainerColor = InputFieldBackground,
+                                cursorColor = TextSecondary,
+                                focusedTextColor = TextSecondary,
                                 unfocusedTextColor = TextSecondary,
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,

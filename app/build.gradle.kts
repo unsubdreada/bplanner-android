@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.material3)
     implementation(libs.androidx.room.runtime)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

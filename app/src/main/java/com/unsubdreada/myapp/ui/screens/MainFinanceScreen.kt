@@ -2,10 +2,13 @@ package com.unsubdreada.myapp.ui.screens
 
 import TablerPlusMinus
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,7 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,21 +35,21 @@ import com.unsubdreada.myapp.data.TransactionEntity
 import com.unsubdreada.myapp.model.FilterType
 import com.unsubdreada.myapp.model.FinanceCategory
 import com.unsubdreada.myapp.model.SortType
-import com.unsubdreada.myapp.ui.components.Footer
 import com.unsubdreada.myapp.ui.components.Header
 import com.unsubdreada.myapp.ui.components.SortBottomSheet
 import com.unsubdreada.myapp.ui.components.TransactionBottomSheet
 import com.unsubdreada.myapp.ui.components.TransactionItem
 import com.unsubdreada.myapp.ui.theme.ButtonAcceptBackground
 import com.unsubdreada.myapp.ui.theme.ButtonAcceptText
-import com.unsubdreada.myapp.ui.theme.ScreenBackground
 import com.unsubdreada.myapp.ui.theme.TextPrimary
 import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainFinanceScreen() {
+fun MainFinanceScreen(
+    innerPadding: PaddingValues
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val db = remember { AppDatabase.getDatabase(context) }
@@ -93,11 +95,14 @@ fun MainFinanceScreen() {
 
     var editingTransaction by remember { mutableStateOf<TransactionEntity?>(null) } // Редактируемая запись, null - при добавлении записи
 
-    Scaffold(
+    Box(
         modifier = Modifier
-            .fillMaxSize(),
-        containerColor = ScreenBackground,
-        topBar = {
+            .fillMaxSize()
+            .padding(innerPadding)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
             Header(
                 isSelectedMode = isSelectedMode,
                 onDeleteClick = {
@@ -118,135 +123,134 @@ fun MainFinanceScreen() {
                 scope = scope,
                 scrollState = scrollState
             )
-        },
-        bottomBar = {
-            Footer()
-        },
-        floatingActionButton = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            LazyColumn(
+                state = scrollState,
+                modifier = Modifier
+                    .fillMaxWidth(),
+                contentPadding = innerPadding,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SmallFloatingActionButton(
-                    onClick = {
-                        currentFilterType = currentFilterType.next()
-                    },
-                    shape = CircleShape,
-                    containerColor = currentFilterType.color
-                ) {
-                    Icon(
-                        imageVector = currentFilterType.icon,
-                        contentDescription = null,
-                        tint = TextPrimary
-                    )
-                }
-                Spacer(Modifier.width(10.dp))
-                FloatingActionButton(
-                    onClick = {
-                        editingTransaction = null
-                        showSheet = true
-                    },
-                    containerColor = ButtonAcceptBackground,
-                    contentColor = ButtonAcceptText,
-                    shape = CircleShape
-                ) {
-                    Icon(
-                        imageVector = TablerPlusMinus,
-                        contentDescription = "Добавить"
+                items(
+                    items = transactionList,
+                    key = { transaction -> transaction.id }
+                ) { transaction ->
+                    val category = remember(transaction.category) {
+                        runCatching { FinanceCategory.valueOf(transaction.category) }
+                            .getOrElse { FinanceCategory.OTHER_EXP }
+                    }
+                    val isCurrentSelect = selectedIds.contains(transaction.id)
+
+                    TransactionItem(
+                        transaction = transaction,
+                        isSelectedMode = isCurrentSelect,
+                        onLongClick = {
+                            if (!isSelectedMode) selectedIds = selectedIds + transaction.id
+                        },
+                        onClick = {
+                            if (isSelectedMode) {
+                                selectedIds = if (selectedIds.contains(transaction.id)) {
+                                    selectedIds - transaction.id
+                                } else {
+                                    selectedIds + transaction.id
+                                }
+                            } else {
+                                editingTransaction = transaction
+                                showSheet = true
+                            }
+                        },
+                        category = category
                     )
                 }
             }
         }
-    ) { innerPadding ->
-        LazyColumn(
-            state = scrollState,
-            modifier = Modifier
-                .fillMaxWidth(),
-            contentPadding = innerPadding,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(
-                items = transactionList,
-                key = { transaction -> transaction.id }
-            ) { transaction ->
-                val category = remember(transaction.category) {
-                    runCatching { FinanceCategory.valueOf(transaction.category) }
-                        .getOrElse { FinanceCategory.OTHER_EXP }
-                }
-                val isCurrentSelect = selectedIds.contains(transaction.id)
 
-                TransactionItem(
-                    transaction = transaction,
-                    isSelectedMode = isCurrentSelect,
-                    onLongClick = {
-                        if (!isSelectedMode) selectedIds = selectedIds + transaction.id
-                    },
-                    onClick = {
-                        if (isSelectedMode) {
-                            selectedIds = if (selectedIds.contains(transaction.id)) {
-                                selectedIds - transaction.id
-                            } else {
-                                selectedIds + transaction.id
-                            }
-                        } else {
-                            editingTransaction = transaction
-                            showSheet = true
-                        }
-                    },
-                    category = category
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 16.dp, end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            SmallFloatingActionButton(
+                onClick = {
+                    currentFilterType = currentFilterType.next()
+                },
+                shape = CircleShape,
+                containerColor = currentFilterType.color
+            ) {
+                Icon(
+                    imageVector = currentFilterType.icon,
+                    contentDescription = null,
+                    tint = TextPrimary
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            FloatingActionButton(
+                onClick = {
+                    editingTransaction = null
+                    showSheet = true
+                },
+                containerColor = ButtonAcceptBackground,
+                contentColor = ButtonAcceptText,
+                shape = CircleShape
+            ) {
+                Icon(
+                    imageVector = TablerPlusMinus,
+                    contentDescription = "Добавить"
                 )
             }
         }
-        if (showSheet) {
-            TransactionBottomSheet(
-                transactionEdit = editingTransaction,
-                onDismiss = {
-                    showSheet = false
-                    editingTransaction = null
-                },
-                onDeleteClick = { transactionToDel ->
-                    scope.launch {
-                        dao.delTransactionsById(listOf(transactionToDel.id))
-                        selectedIds = emptySet()
-                    }
-                    showSheet = false
-                    editingTransaction = null
-                },
-                onConfirm = { amountResult, isIncomeResult, categoryResult, commentResult, dateResult ->
-                    val isEditing = editingTransaction != null
-                    val idToSave = editingTransaction?.id ?: 0
-                    val createdAtTime = editingTransaction?.createdAt ?: System.currentTimeMillis()
+    }
+    if (showSheet) {
+        TransactionBottomSheet(
+            transactionEdit = editingTransaction,
+            onDismiss = {
+                showSheet = false
+                editingTransaction = null
+            },
+            onDeleteClick = { transactionToDel ->
+                scope.launch {
+                    dao.delTransactionsById(listOf(transactionToDel.id))
+                    selectedIds = emptySet()
+                }
+                showSheet = false
+                editingTransaction = null
+            },
+            onConfirm = { amountResult, isIncomeResult, categoryResult, commentResult, dateResult ->
+                val isEditing = editingTransaction != null
+                val idToSave = editingTransaction?.id ?: 0
+                val createdAtTime = editingTransaction?.createdAt ?: System.currentTimeMillis()
 
-                    val setTransaction = TransactionEntity(
-                        id = idToSave,
-                        amount = amountResult,
-                        category = categoryResult.name,
-                        comment = commentResult,
-                        date = dateResult,
-                        isIncome = isIncomeResult,
-                        createdAt = createdAtTime
-                    )
-                    scope.launch {
-                        if (isEditing) {
-                            dao.updateTransaction(setTransaction)
-                        } else {
-                            dao.insertTransaction(setTransaction)
-                        }
+                val setTransaction = TransactionEntity(
+                    id = idToSave,
+                    amount = amountResult,
+                    category = categoryResult.name,
+                    comment = commentResult,
+                    date = dateResult,
+                    isIncome = isIncomeResult,
+                    createdAt = createdAtTime
+                )
+                scope.launch {
+                    if (isEditing) {
+                        dao.updateTransaction(setTransaction)
+                    } else {
+                        dao.insertTransaction(setTransaction)
                     }
-                    showSheet = false
-                    editingTransaction = null
                 }
-            )
-        }
-        if (showSortSheet) {
-            SortBottomSheet(
-                currentSortType = currentSortType,
-                onDismiss = {
-                    showSortSheet = false
-                },
-                onSortSelected = { newSortType ->
-                    currentSortType = newSortType
-                }
-            )
-        }
+                showSheet = false
+                editingTransaction = null
+            }
+        )
+    }
+    if (showSortSheet) {
+        SortBottomSheet(
+            currentSortType = currentSortType,
+            onDismiss = {
+                showSortSheet = false
+            },
+            onSortSelected = { newSortType ->
+                currentSortType = newSortType
+            }
+        )
     }
 }
