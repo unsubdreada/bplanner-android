@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
                         sharedPreferences.getString("user_name", "") ?: ""
                     )
                 }
-                var selectedTab by remember { mutableIntStateOf(2) }
+                var selectedTab by remember { mutableIntStateOf(0) }
 
                 if (userName.isBlank()) {
                     StartScreen(onNameSaved = { name -> userName = name })

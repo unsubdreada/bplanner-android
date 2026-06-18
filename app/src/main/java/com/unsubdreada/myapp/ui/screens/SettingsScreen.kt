@@ -1,6 +1,5 @@
 package com.unsubdreada.myapp.ui.screens
 
-import FluentuiSystemIconsPerson
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -24,17 +23,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
+import com.unsubdreada.myapp.R
 import com.unsubdreada.myapp.ui.components.SettingRow
 import com.unsubdreada.myapp.ui.theme.PrimaryDark
 import com.unsubdreada.myapp.ui.theme.TextPrimary
 import com.unsubdreada.myapp.ui.theme.TextSecondary
-import com.unsubdreada.myapp.ui.theme.icons.FluentuiSystemIconsBookDatabase
-import com.unsubdreada.myapp.ui.theme.icons.FluentuiSystemIconsPersonStarburst
 
 @Composable
 fun SettingsScreen(innerPadding: PaddingValues) {
@@ -43,8 +44,13 @@ fun SettingsScreen(innerPadding: PaddingValues) {
     val context = LocalContext.current
     val sharedPreferences =
         remember { context.getSharedPreferences("finance_prefs", Context.MODE_PRIVATE) }
-    val userName =
-        remember { sharedPreferences.getString("user_name", "Пользователь") ?: "Пользователь" }
+
+    var userName by remember {
+        mutableStateOf(sharedPreferences.getString("user_name", "Пользователь") ?: "Пользователь")
+    }
+    var birthDay by remember {
+        mutableStateOf(sharedPreferences.getString("user_birthday", "Не указана") ?: "Не указана")
+    }
 
     when (currentSettingScreen) {
         "main" -> {
@@ -57,7 +63,7 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                 Spacer(Modifier.height(40.dp))
 
                 Icon(
-                    imageVector = FluentuiSystemIconsPerson,
+                    imageVector = ImageVector.vectorResource(id = R.drawable.fluentui_system_icons_person),
                     contentDescription = null,
                     tint = Color.Unspecified,
                     modifier = Modifier.size(100.dp)
@@ -70,6 +76,12 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Light,
                     color = TextPrimary
+                )
+                Text(
+                    text = birthDay,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Light,
+                    color = TextPrimary.copy(alpha = 0.5f)
                 )
 
                 Spacer(Modifier.height(40.dp))
@@ -86,7 +98,7 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                     SettingRow(
                         title = "Аккаунт",
                         subTitle = "Имя, дата рождения, валюта",
-                        icon = FluentuiSystemIconsPersonStarburst,
+                        icon = ImageVector.vectorResource(id = R.drawable.fluentui_system_icons_person_starburst),
                         onClick = { currentSettingScreen = "account" }
                     )
 
@@ -98,7 +110,7 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                     SettingRow(
                         title = "Данные и память",
                         subTitle = "Экспорт, импорт, очистить историю",
-                        icon = FluentuiSystemIconsBookDatabase,
+                        icon = ImageVector.vectorResource(id = R.drawable.fluentui_system_icons_book_database),
                         onClick = { currentSettingScreen = "data" }
                     )
                 }
@@ -120,6 +132,23 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                     modifier = Modifier.offset(y = (-5).dp)
                 )
             }
+        }
+
+        "account" -> {
+            AccountSettingsScreen(
+                innerPadding = innerPadding,
+                currentName = userName,
+                currentBirthDay = birthDay,
+                onNameChange = { newName ->
+                    userName = newName
+                    sharedPreferences.edit { putString("user_name", newName) }
+                },
+                onBirthDayChange = { newBirthDay ->
+                    birthDay = newBirthDay
+                    sharedPreferences.edit { putString("user_birthday", newBirthDay) }
+                },
+                onBackClick = { currentSettingScreen = "main" }
+            )
         }
     }
 }

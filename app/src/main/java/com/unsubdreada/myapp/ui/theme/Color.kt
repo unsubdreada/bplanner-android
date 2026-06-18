@@ -22,6 +22,8 @@ val BlurredPanelBackground = Color(0xD9212121)
 val TextPrimary = Color(0xFFFFFFFF)          // Основной текст (Имена, сообщения)
 val TextSecondary = Color(0xFF757575)        // Второстепенный текст и иконки (Время, плейсхолдеры)
 
+val TextAdditional = Color(0xFF6EB1F3)
+
 // Фирменный Акцент (Кнопки, Фокус, Системные элементы)
 val AccentBlue = Color(0xFF2EA6FF)           // Цвет круглой плавающей кнопки "плюс" и галочек
 val AccentBlueOnDark =
