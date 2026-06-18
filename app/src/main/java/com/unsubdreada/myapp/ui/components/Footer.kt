@@ -21,11 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unsubdreada.myapp.ui.theme.AccentBlue
 import com.unsubdreada.myapp.ui.theme.BlurredPanelBackground
-import com.unsubdreada.myapp.ui.theme.TextSecondary
+import com.unsubdreada.myapp.ui.theme.TextPrimary
 
 @Composable
 fun Footer(
@@ -59,11 +60,13 @@ fun Footer(
                 NavigationBarItem(
                     selected = isSelected,
                     onClick = { onTabSelected(index) },
+                    modifier = Modifier.weight(1f),
                     label = {
                         Text(
                             text = title,
-                            fontSize = 12.sp,
-                            modifier = Modifier.offset(y = (-5).dp)
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Light,
+                            modifier = Modifier.offset(y = (-3).dp)
                         )
                     },
                     icon = {
@@ -72,13 +75,14 @@ fun Footer(
                             contentDescription = title,
                             modifier = Modifier
                                 .size(20.dp)
+                                .offset(y = 3.dp)
                         )
                     },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = AccentBlue,
                         selectedTextColor = AccentBlue,
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary,
+                        unselectedIconColor = TextPrimary,
+                        unselectedTextColor = TextPrimary,
                         indicatorColor = Color.Transparent
                     )
                 )

@@ -95,227 +95,222 @@ fun Header(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(PrimaryDark.copy(0.9f))
+            .padding(10.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(PrimaryDark.copy(0.9f))
-                .padding(10.dp)
+                .height(50.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "BPlanner",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    color = TextPrimary
-                )
+            Text(
+                text = "BPlanner",
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                color = TextPrimary
+            )
 
-                if (isSelectedMode) {
+            if (isSelectedMode) {
+                IconButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier.minimumInteractiveComponentSize()
+                ) {
+                    Icon(
+                        imageVector = TablerTrash,
+                        contentDescription = "Удалить выбранное",
+                        tint = TextPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            } else {
+                AnimatedVisibility(
+                    visible = !isSearchVisible,
+                    enter = scaleIn() + expandHorizontally(),
+                    exit = scaleOut() + shrinkHorizontally()
+                ) {
                     IconButton(
-                        onClick = onDeleteClick,
-                        modifier = Modifier.minimumInteractiveComponentSize()
+                        onClick = {
+                            scope.launch {
+                                scrollState.animateScrollToItem(0)
+                                delay(50.milliseconds)
+                                searchFocus.requestFocus()
+                            }
+                        }
                     ) {
                         Icon(
-                            imageVector = TablerTrash,
-                            contentDescription = "Удалить выбранное",
+                            imageVector = TablerSearch,
+                            contentDescription = null,
                             tint = TextPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                } else {
-                    AnimatedVisibility(
-                        visible = !isSearchVisible,
-                        enter = scaleIn() + expandHorizontally(),
-                        exit = scaleOut() + shrinkHorizontally()
-                    ) {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    scrollState.animateScrollToItem(0)
-                                    delay(50.milliseconds)
-                                    searchFocus.requestFocus()
-                                }
-                            }
-                        ) {
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = isSearchVisible,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            BasicTextField(
+                singleLine = true,
+                value = searchText,
+                onValueChange = onSearchTextExchange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .focusRequester(searchFocus),
+                cursorBrush = SolidColor(TextSecondary),
+                textStyle = TextStyle(color = TextSecondary, fontSize = 14.sp),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Search,
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        focusManager.clearFocus()
+                    }
+                ),
+                decorationBox = { innerTextField ->
+                    TextFieldDefaults.DecorationBox(
+                        value = searchText,
+                        innerTextField = innerTextField,
+                        enabled = true,
+                        singleLine = true,
+                        visualTransformation = VisualTransformation.None,
+                        interactionSource = remember { MutableInteractionSource() },
+                        placeholder = {
+                            Text(
+                                text = "Поиск по примечанию",
+                                fontSize = 12.sp
+                            )
+                        },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        colors = TextFieldDefaults.colors(
+                            unfocusedContainerColor = InputFieldBackground,
+                            unfocusedPlaceholderColor = TextSecondary,
+                            focusedContainerColor = InputFieldBackground,
+                            cursorColor = TextSecondary,
+                            focusedTextColor = TextSecondary,
+                            unfocusedTextColor = TextSecondary,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent
+                        ),
+                        shape = CircleShape,
+                        leadingIcon = {
                             Icon(
                                 imageVector = TablerSearch,
                                 contentDescription = null,
-                                tint = TextPrimary,
-                                modifier = Modifier.size(20.dp)
+                                tint = TextSecondary
                             )
-                        }
-                    }
-                }
-            }
-
-            AnimatedVisibility(
-                visible = isSearchVisible,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                BasicTextField(
-                    singleLine = true,
-                    value = searchText,
-                    onValueChange = onSearchTextExchange,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp)
-                        .focusRequester(searchFocus),
-                    cursorBrush = SolidColor(TextSecondary),
-                    textStyle = TextStyle(color = TextSecondary, fontSize = 14.sp),
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Search,
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onSearch = {
-                            focusManager.clearFocus()
-                        }
-                    ),
-                    decorationBox = { innerTextField ->
-                        TextFieldDefaults.DecorationBox(
-                            value = searchText,
-                            innerTextField = innerTextField,
-                            enabled = true,
-                            singleLine = true,
-                            visualTransformation = VisualTransformation.None,
-                            interactionSource = remember { MutableInteractionSource() },
-                            placeholder = {
-                                Text(
-                                    text = "Поиск по примечанию",
-                                    fontSize = 12.sp
-                                )
-                            },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                            colors = TextFieldDefaults.colors(
-                                unfocusedContainerColor = InputFieldBackground,
-                                unfocusedPlaceholderColor = TextSecondary,
-                                focusedContainerColor = InputFieldBackground,
-                                cursorColor = TextSecondary,
-                                focusedTextColor = TextSecondary,
-                                unfocusedTextColor = TextSecondary,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent
-                            ),
-                            shape = CircleShape,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = TablerSearch,
-                                    contentDescription = null,
-                                    tint = TextSecondary
-                                )
-                            },
-                            trailingIcon = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy((-15).dp)
-                                ) {
-                                    if (searchText.isNotEmpty()) {
-                                        IconButton(
-                                            onClick = {
-                                                onSearchTextExchange("")
-                                                focusManager.clearFocus()
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = TablerX,
-                                                contentDescription = null,
-                                                tint = TextSecondary
-                                            )
-                                        }
-                                    }
+                        },
+                        trailingIcon = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy((-15).dp)
+                            ) {
+                                if (searchText.isNotEmpty()) {
                                     IconButton(
                                         onClick = {
-                                            onSortClick()
+                                            onSearchTextExchange("")
+                                            focusManager.clearFocus()
                                         }
                                     ) {
                                         Icon(
-                                            imageVector = TablerArrowsSort,
+                                            imageVector = TablerX,
                                             contentDescription = null,
                                             tint = TextSecondary
                                         )
                                     }
                                 }
+                                IconButton(
+                                    onClick = {
+                                        onSortClick()
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = TablerArrowsSort,
+                                        contentDescription = null,
+                                        tint = TextSecondary
+                                    )
+                                }
                             }
-                        )
-                    }
-                )
-            }
-        }
-
-        Spacer(Modifier.height(5.dp))
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(45.dp)
-                .padding(horizontal = 10.dp),
-            shape = CircleShape,
-            color = InputFieldBackground.copy(0.9f)
-        ) {
-            LazyRow(
-                state = carouselState,
-                modifier = Modifier.padding(5.dp)
-            ) {
-                items(filteredCategory) { categoryTitle ->
-                    val isSelected = if (categoryTitle == "Все") {
-                        selectedCategory.isEmpty()
-                    } else {
-                        selectedCategory == categoryTitle
-                    }
-
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = {
-                            if (categoryTitle == "Все") {
-                                onCategorySelect("")
-                            } else {
-                                onCategorySelect(if (isSelected) "" else categoryTitle)
-                            }
-                        },
-                        label = {
-                            Text(
-                                text = categoryTitle,
-                                fontSize = 12.sp
-                            )
-                        },
-                        shape = CircleShape,
-                        leadingIcon = {
-                            val iconVector = if (categoryTitle == "Все") {
-                                TablerInfinity
-                            } else {
-                                FinanceCategory.entries.find { it.title == categoryTitle }?.icon
-                                    ?: TablerDots
-                            }
-                            Icon(
-                                imageVector = iconVector,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            labelColor = TextSecondary,
-                            selectedLabelColor = AccentBlue,
-                            selectedContainerColor = InputFieldStrokeFocused.copy(alpha = 0.15f),
-                            disabledLeadingIconColor = TextSecondary,
-                            selectedLeadingIconColor = AccentBlue,
-                            iconColor = TextSecondary
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = Color.Transparent,
-                            selectedBorderWidth = 0.dp,
-                            borderWidth = 2.dp
-                        )
+                        }
                     )
                 }
+            )
+        }
+    }
+
+    Spacer(Modifier.height(5.dp))
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(45.dp)
+            .padding(horizontal = 10.dp),
+        shape = CircleShape,
+        color = InputFieldBackground.copy(0.9f)
+    ) {
+        LazyRow(
+            state = carouselState,
+            modifier = Modifier.padding(5.dp)
+        ) {
+            items(filteredCategory) { categoryTitle ->
+                val isSelected = if (categoryTitle == "Все") {
+                    selectedCategory.isEmpty()
+                } else {
+                    selectedCategory == categoryTitle
+                }
+
+                FilterChip(
+                    selected = isSelected,
+                    onClick = {
+                        if (categoryTitle == "Все") {
+                            onCategorySelect("")
+                        } else {
+                            onCategorySelect(if (isSelected) "" else categoryTitle)
+                        }
+                    },
+                    label = {
+                        Text(
+                            text = categoryTitle,
+                            fontSize = 12.sp
+                        )
+                    },
+                    shape = CircleShape,
+                    leadingIcon = {
+                        val iconVector = if (categoryTitle == "Все") {
+                            TablerInfinity
+                        } else {
+                            FinanceCategory.entries.find { it.title == categoryTitle }?.icon
+                                ?: TablerDots
+                        }
+                        Icon(
+                            imageVector = iconVector,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        labelColor = TextSecondary,
+                        selectedLabelColor = AccentBlue,
+                        selectedContainerColor = InputFieldStrokeFocused.copy(alpha = 0.15f),
+                        disabledLeadingIconColor = TextSecondary,
+                        selectedLeadingIconColor = AccentBlue,
+                        iconColor = TextSecondary
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = isSelected,
+                        borderColor = Color.Transparent,
+                        selectedBorderWidth = 0.dp,
+                        borderWidth = 2.dp
+                    )
+                )
             }
         }
     }

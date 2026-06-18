@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.unsubdreada.myapp.ui.components.Footer
+import com.unsubdreada.myapp.ui.screens.ChartScreen
 import com.unsubdreada.myapp.ui.screens.MainFinanceScreen
 import com.unsubdreada.myapp.ui.screens.SettingsScreen
 import com.unsubdreada.myapp.ui.screens.StartScreen
@@ -42,7 +43,7 @@ class MainActivity : ComponentActivity() {
                         sharedPreferences.getString("user_name", "") ?: ""
                     )
                 }
-                var selectedTab by remember { mutableIntStateOf(0) }
+                var selectedTab by remember { mutableIntStateOf(2) }
 
                 if (userName.isBlank()) {
                     StartScreen(onNameSaved = { name -> userName = name })
@@ -59,7 +60,7 @@ class MainActivity : ComponentActivity() {
                     ) { innerPadding ->
                         when (selectedTab) {
                             0 -> MainFinanceScreen(innerPadding = innerPadding)
-                            1 -> {}
+                            1 -> ChartScreen(innerPadding = innerPadding)
                             2 -> SettingsScreen(innerPadding = innerPadding)
                         }
                     }

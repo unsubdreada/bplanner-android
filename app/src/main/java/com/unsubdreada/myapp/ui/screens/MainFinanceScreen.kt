@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -99,38 +98,39 @@ fun MainFinanceScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(innerPadding)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            Header(
-                isSelectedMode = isSelectedMode,
-                onDeleteClick = {
-                    scope.launch {
-                        dao.delTransactionsById(selectedIds.toList())
-                        selectedIds = emptySet()
-                    }
-                },
-                searchText = searchQuery,
-                onSearchTextExchange = { searchQuery = it },
-                selectedCategory = selectedCategoryFilter,
-                onCategorySelect = { selectedCategoryFilter = it },
-                availableFilters = existingCategoryTitle,
-                onSortClick = {
-                    showSortSheet = true
-                },
-                isSearchVisible = isSearchVisible,
-                scope = scope,
-                scrollState = scrollState
-            )
             LazyColumn(
                 state = scrollState,
                 modifier = Modifier
-                    .fillMaxWidth(),
-                contentPadding = innerPadding,
+                    .fillMaxSize(),
+//                contentPadding = innerPadding,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                stickyHeader {
+                    Header(
+                        isSelectedMode = isSelectedMode,
+                        onDeleteClick = {
+                            scope.launch {
+                                dao.delTransactionsById(selectedIds.toList())
+                                selectedIds = emptySet()
+                            }
+                        },
+                        searchText = searchQuery,
+                        onSearchTextExchange = { searchQuery = it },
+                        selectedCategory = selectedCategoryFilter,
+                        onCategorySelect = { selectedCategoryFilter = it },
+                        availableFilters = existingCategoryTitle,
+                        onSortClick = {
+                            showSortSheet = true
+                        },
+                        isSearchVisible = isSearchVisible,
+                        scope = scope,
+                        scrollState = scrollState
+                    )
+                }
                 items(
                     items = transactionList,
                     key = { transaction -> transaction.id }
@@ -168,7 +168,8 @@ fun MainFinanceScreen(
         Row(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = 16.dp, end = 16.dp),
+                .padding(innerPadding)
+                .padding(end = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             SmallFloatingActionButton(
