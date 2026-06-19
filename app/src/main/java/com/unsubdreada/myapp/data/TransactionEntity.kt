@@ -12,5 +12,6 @@ data class TransactionEntity(
     val comment: String,
     val date: String,
     val isIncome: Boolean,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val currencyCode: String = "RUB"
 )

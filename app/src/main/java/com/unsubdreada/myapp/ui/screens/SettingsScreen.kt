@@ -51,6 +51,9 @@ fun SettingsScreen(innerPadding: PaddingValues) {
     var birthDay by remember {
         mutableStateOf(sharedPreferences.getString("user_birthday", "Не указана") ?: "Не указана")
     }
+    var currencyCode by remember {
+        mutableStateOf(sharedPreferences.getString("user_currency", "RUB") ?: "RUB")
+    }
 
     when (currentSettingScreen) {
         "main" -> {
@@ -139,6 +142,7 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                 innerPadding = innerPadding,
                 currentName = userName,
                 currentBirthDay = birthDay,
+                currentCurrencyCode = currencyCode,
                 onNameChange = { newName ->
                     userName = newName
                     sharedPreferences.edit { putString("user_name", newName) }
@@ -146,6 +150,10 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                 onBirthDayChange = { newBirthDay ->
                     birthDay = newBirthDay
                     sharedPreferences.edit { putString("user_birthday", newBirthDay) }
+                },
+                onCurrencyChange = { newCurrency ->
+                    currencyCode = newCurrency
+                    sharedPreferences.edit { putString("user_currency", newCurrency) }
                 },
                 onBackClick = { currentSettingScreen = "main" }
             )

@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unsubdreada.myapp.data.TransactionEntity
@@ -45,6 +46,7 @@ import java.util.Locale
 fun TransactionItem(
     transaction: TransactionEntity,
     category: FinanceCategory,
+    currencySymbol: ImageVector,
     isSelectedMode: Boolean,
     onLongClick: () -> Unit,
     onClick: () -> Unit
@@ -64,7 +66,7 @@ fun TransactionItem(
     } else {
         TablerChecks
     }
-    
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -153,11 +155,19 @@ fun TransactionItem(
                 )
             )
 
-            Text(
-                text = "%.2f ₽".format(Locale.US, transaction.amount),
-                fontSize = 18.sp,
-                color = if (transaction.isIncome) TextIncome else TextExpense
-            )
+            Row() {
+                Text(
+                    text = "%.2f".format(Locale.US, transaction.amount),
+                    fontSize = 18.sp,
+                    color = if (transaction.isIncome) TextIncome else TextExpense
+                )
+
+                Icon(
+                    imageVector = currencySymbol,
+                    contentDescription = null,
+                    tint = if (transaction.isIncome) TextIncome else TextExpense
+                )
+            }
         }
     }
 }

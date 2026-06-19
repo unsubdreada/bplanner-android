@@ -1,5 +1,6 @@
 package com.unsubdreada.myapp.ui.screens
 
+import TablerCurrencyRubel
 import TablerPlusMinus
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.unsubdreada.myapp.data.AppDatabase
 import com.unsubdreada.myapp.data.TransactionEntity
+import com.unsubdreada.myapp.model.CurrencyType
 import com.unsubdreada.myapp.model.FilterType
 import com.unsubdreada.myapp.model.FinanceCategory
 import com.unsubdreada.myapp.model.SortType
@@ -48,7 +50,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainFinanceScreen(
-    innerPadding: PaddingValues
+    innerPadding: PaddingValues,
+    defaultCurrency: String
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -140,6 +143,10 @@ fun MainFinanceScreen(
                             .getOrElse { FinanceCategory.OTHER_EXP }
                     }
                     val isCurrentSelect = selectedIds.contains(transaction.id)
+                    val transactionCurrencySymbol = remember(transaction.currencyCode) {
+                        runCatching { CurrencyType.valueOf(transaction.currencyCode).symbol }.getOrElse { TablerCurrencyRubel }
+                    }
+
 
                     TransactionItem(
                         transaction = transaction,
@@ -159,7 +166,8 @@ fun MainFinanceScreen(
                                 showSheet = true
                             }
                         },
-                        category = category
+                        category = category,
+                        currencySymbol = transactionCurrencySymbol
                     )
                 }
             }
@@ -205,6 +213,7 @@ fun MainFinanceScreen(
     if (showSheet) {
         TransactionBottomSheet(
             transactionEdit = editingTransaction,
+            defaultCurrency = defaultCurrency,
             onDismiss = {
                 showSheet = false
                 editingTransaction = null
@@ -217,7 +226,7 @@ fun MainFinanceScreen(
                 showSheet = false
                 editingTransaction = null
             },
-            onConfirm = { amountResult, isIncomeResult, categoryResult, commentResult, dateResult ->
+            onConfirm = { amountResult, isIncomeResult, categoryResult, commentResult, dateResult, currencyResult ->
                 val isEditing = editingTransaction != null
                 val idToSave = editingTransaction?.id ?: 0
                 val createdAtTime = editingTransaction?.createdAt ?: System.currentTimeMillis()
@@ -229,7 +238,8 @@ fun MainFinanceScreen(
                     comment = commentResult,
                     date = dateResult,
                     isIncome = isIncomeResult,
-                    createdAt = createdAtTime
+                    createdAt = createdAtTime,
+                    currencyCode = currencyResult
                 )
                 scope.launch {
                     if (isEditing) {

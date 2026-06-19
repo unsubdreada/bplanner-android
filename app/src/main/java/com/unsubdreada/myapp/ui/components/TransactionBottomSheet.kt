@@ -7,6 +7,7 @@ import TablerTrash
 import android.app.DatePickerDialog
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -25,10 +27,13 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -51,6 +56,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unsubdreada.myapp.data.TransactionEntity
+import com.unsubdreada.myapp.model.CurrencyType
 import com.unsubdreada.myapp.model.FinanceCategory
 import com.unsubdreada.myapp.ui.theme.BlurredPanelBackground
 import com.unsubdreada.myapp.ui.theme.ButtonAcceptBackground
@@ -76,9 +82,10 @@ import java.util.Locale
 @Composable
 fun TransactionBottomSheet(
     transactionEdit: TransactionEntity? = null,
+    defaultCurrency: String = "RUB",
     onDismiss: () -> Unit,
     onDeleteClick: (TransactionEntity) -> Unit,
-    onConfirm: (Double, Boolean, FinanceCategory, String, String) -> Unit
+    onConfirm: (Double, Boolean, FinanceCategory, String, String, String) -> Unit
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -87,6 +94,17 @@ fun TransactionBottomSheet(
         "Доход" to TablerMoneybagPlus,
         "Расход" to TablerMoneybagMinus
     )
+
+    var selectedCurrency by remember {
+        mutableStateOf(transactionEdit?.currencyCode ?: defaultCurrency)
+    }
+
+    var isCurrencyMenuExpanded by remember { mutableStateOf(false) } // управление дропдаун
+
+    val currentCurrencyObject = remember(selectedCurrency) {
+        runCatching { CurrencyType.valueOf(selectedCurrency) }.getOrElse { CurrencyType.RUB }
+    }
+
     var selectedType by remember { mutableStateOf(transactionEdit?.isIncome ?: true) }
     var commentInput by remember { mutableStateOf(transactionEdit?.comment ?: "") }
     var selectedCategory by remember(selectedType) {
@@ -102,7 +120,7 @@ fun TransactionBottomSheet(
 
     val dbFormatter = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
     val uiFormatter = remember { SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()) }
-    var selectDate by remember {
+    var selectedDate by remember {
         mutableStateOf(
             transactionEdit?.date ?: dbFormatter.format(Calendar.getInstance().time)
         )
@@ -113,14 +131,14 @@ fun TransactionBottomSheet(
             context,
             { _, year, month, dayOfMonth ->
                 calendar.set(year, month, dayOfMonth)
-                selectDate = dbFormatter.format(calendar.time)
+                selectedDate = dbFormatter.format(calendar.time)
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
         )
     }
-    val parsedDate = dbFormatter.parse(selectDate) ?: Calendar.getInstance().time
+    val parsedDate = dbFormatter.parse(selectedDate) ?: Calendar.getInstance().time
     val formatedUiDate = uiFormatter.format(parsedDate)
 
     val carouselState = rememberLazyListState()
@@ -255,6 +273,43 @@ fun TransactionBottomSheet(
                         fontSize = 16.sp,
                         color = InputTextPlaceholder
                     )
+                },
+                trailingIcon = {
+                    Box {
+                        IconButton(
+                            onClick = { isCurrencyMenuExpanded = true }
+                        ) {
+                            Icon(
+                                imageVector = currentCurrencyObject.symbol,
+                                contentDescription = null,
+                                tint = TextSecondary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = isCurrencyMenuExpanded,
+                            onDismissRequest = { isCurrencyMenuExpanded = false }
+                        ) {
+                            CurrencyType.entries.forEach { currency ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row() {
+                                            Text(currency.title)
+                                            Icon(
+                                                imageVector = currency.symbol,
+                                                contentDescription = null
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedCurrency = currency.name
+                                        isCurrencyMenuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             )
 
@@ -352,7 +407,8 @@ fun TransactionBottomSheet(
                             selectedType,
                             selectedCategory,
                             commentInput,
-                            selectDate
+                            selectedDate,
+                            selectedCurrency
                         )
                     },
                     enabled = amountInput.isNotEmpty(),

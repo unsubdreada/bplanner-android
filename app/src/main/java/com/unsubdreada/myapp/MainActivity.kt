@@ -59,7 +59,15 @@ class MainActivity : ComponentActivity() {
                         }
                     ) { innerPadding ->
                         when (selectedTab) {
-                            0 -> MainFinanceScreen(innerPadding = innerPadding)
+                            0 -> {
+                                val globalCurrencyCode =
+                                    sharedPreferences.getString("user_currency", "RUB") ?: "RUB"
+                                MainFinanceScreen(
+                                    innerPadding = innerPadding,
+                                    defaultCurrency = globalCurrencyCode
+                                )
+                            }
+
                             1 -> ChartScreen(innerPadding = innerPadding)
                             2 -> SettingsScreen(innerPadding = innerPadding)
                         }

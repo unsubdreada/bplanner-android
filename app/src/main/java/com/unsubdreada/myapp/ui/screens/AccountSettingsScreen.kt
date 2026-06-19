@@ -2,6 +2,7 @@ package com.unsubdreada.myapp.ui.screens
 
 import TablerChevronLeft
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unsubdreada.myapp.R
+import com.unsubdreada.myapp.model.CurrencyType
 import com.unsubdreada.myapp.ui.components.SettingRow
 import com.unsubdreada.myapp.ui.theme.PrimaryDark
 import com.unsubdreada.myapp.ui.theme.ScreenBackground
@@ -50,8 +54,10 @@ fun AccountSettingsScreen(
     innerPadding: PaddingValues,
     currentName: String,
     currentBirthDay: String,
+    currentCurrencyCode: String,
     onNameChange: (String) -> Unit,
     onBirthDayChange: (String) -> Unit,
+    onCurrencyChange: (String) -> Unit,
     onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -88,6 +94,12 @@ fun AccountSettingsScreen(
             calendar.get(Calendar.MONTH),
             calendar.get(Calendar.DAY_OF_MONTH)
         )
+    }
+
+    var isCurrencyMenuExpanded by remember { mutableStateOf(false) }
+
+    val selectedCurrencyObject = remember(currentCurrencyCode) {
+        runCatching { CurrencyType.valueOf(currentCurrencyCode) }.getOrElse { CurrencyType.RUB }
     }
 
     Column(
@@ -194,12 +206,35 @@ fun AccountSettingsScreen(
                     shape = RoundedCornerShape(10.dp)
                 )
         ) {
-            SettingRow(
-                title = "Основная валюта",
-                subTitle = "Российский рубль",
-                icon = ImageVector.vectorResource(id = R.drawable.fluentui_system_icons_globe),
-                onClick = {}
-            )
+            Box(Modifier.fillMaxWidth()) {
+                SettingRow(
+                    title = "Основная валюта",
+                    subTitle = selectedCurrencyObject.title,
+                    icon = ImageVector.vectorResource(id = R.drawable.fluentui_system_icons_globe),
+                    onClick = { isCurrencyMenuExpanded = true }
+                )
+
+                DropdownMenu(
+                    expanded = isCurrencyMenuExpanded,
+                    onDismissRequest = { isCurrencyMenuExpanded = false }
+                ) {
+                    CurrencyType.entries.forEach { currency ->
+                        DropdownMenuItem(
+                            text = { Text(currency.title) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = currency.symbol,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                onCurrencyChange(currency.name)
+                                isCurrencyMenuExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }
