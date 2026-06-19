@@ -213,7 +213,7 @@ fun TransactionBottomSheet(
                 state = carouselState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
+                    .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(horizontal = 24.dp)
             ) {
@@ -255,7 +255,7 @@ fun TransactionBottomSheet(
                 singleLine = true,
                 value = amountInput,
                 onValueChange = { amountInput = it },
-                shape = RoundedCornerShape(15.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = InputFieldBackground,
                     unfocusedPlaceholderColor = TextSecondary,
@@ -326,7 +326,7 @@ fun TransactionBottomSheet(
                 modifier = Modifier
                     .height(50.dp)
                     .width(280.dp),
-                shape = RoundedCornerShape(15.dp),
+                shape = RoundedCornerShape(10.dp),
                 colors = AssistChipDefaults.assistChipColors(
                     containerColor = InputFieldBackground,
                     labelColor = TextSecondary,
@@ -341,7 +341,7 @@ fun TransactionBottomSheet(
                 singleLine = true,
                 value = commentInput,
                 onValueChange = { commentInput = it },
-                shape = RoundedCornerShape(15.dp),
+                shape = RoundedCornerShape(10.dp),
                 placeholder = {
                     Text(
                         text = "Примечание"
@@ -412,7 +412,9 @@ fun TransactionBottomSheet(
                         )
                     },
                     enabled = amountInput.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ButtonAcceptBackground,
