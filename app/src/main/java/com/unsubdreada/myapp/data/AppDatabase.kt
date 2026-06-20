@@ -24,5 +24,9 @@ abstract class AppDatabase : RoomDatabase() {
                 instance
             }
         }
+
+        fun resetInstance() {
+            INSTANCE = null
+        }
     }
 }

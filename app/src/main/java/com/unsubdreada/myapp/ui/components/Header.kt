@@ -58,6 +58,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.unsubdreada.myapp.data.TransactionEntity
 import com.unsubdreada.myapp.model.FinanceCategory
 import com.unsubdreada.myapp.ui.theme.AccentBlue
 import com.unsubdreada.myapp.ui.theme.InputFieldBackground
@@ -83,7 +84,8 @@ fun Header(
     onSortClick: () -> Unit,
     isSearchVisible: Boolean,
     scope: CoroutineScope,
-    scrollState: LazyListState
+    scrollState: LazyListState,
+    allTransactions: List<TransactionEntity>
 ) {
     val focusManager = LocalFocusManager.current
     val carouselState = rememberLazyListState()
@@ -182,10 +184,20 @@ fun Header(
                         visualTransformation = VisualTransformation.None,
                         interactionSource = remember { MutableInteractionSource() },
                         placeholder = {
-                            Text(
-                                text = "Поиск по примечанию",
-                                fontSize = 12.sp
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Поиск по примечанию",
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "${allTransactions.size}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         },
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                         colors = TextFieldDefaults.colors(

@@ -158,5 +158,12 @@ fun SettingsScreen(innerPadding: PaddingValues) {
                 onBackClick = { currentSettingScreen = "main" }
             )
         }
+
+        "data" -> {
+            DataSettingsScreen(
+                innerPadding = innerPadding,
+                onBackClick = { currentSettingScreen = "main" }
+            )
+        }
     }
 }

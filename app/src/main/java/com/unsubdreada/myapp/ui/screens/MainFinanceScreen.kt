@@ -109,7 +109,6 @@ fun MainFinanceScreen(
                 state = scrollState,
                 modifier = Modifier
                     .fillMaxSize(),
-//                contentPadding = innerPadding,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 stickyHeader {
@@ -131,7 +130,8 @@ fun MainFinanceScreen(
                         },
                         isSearchVisible = isSearchVisible,
                         scope = scope,
-                        scrollState = scrollState
+                        scrollState = scrollState,
+                        allTransactions = allTransactions
                     )
                 }
                 items(

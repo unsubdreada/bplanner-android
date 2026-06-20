@@ -48,11 +48,13 @@ fun SettingRow(
             Text(
                 text = title,
                 fontSize = 16.sp,
-                color = TextPrimary
+                color = TextPrimary,
+                modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(
                 text = subTitle,
                 fontSize = 12.sp,
+                lineHeight = 16.sp,
                 color = TextSecondary
             )
         }

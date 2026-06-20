@@ -18,6 +18,8 @@ val PrimaryDark =
     Color(0xFF212121)         // Фон хэдера, футера и карточек (чуть светлее общего фона)
 val BlurredPanelBackground = Color(0xD9212121)
 
+val RedBackground = Color(0XFF640d14)
+
 // Текст
 val TextPrimary = Color(0xFFFFFFFF)          // Основной текст (Имена, сообщения)
 val TextSecondary = Color(0xFF757575)        // Второстепенный текст и иконки (Время, плейсхолдеры)

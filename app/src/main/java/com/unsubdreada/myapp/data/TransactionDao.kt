@@ -11,6 +11,9 @@ interface TransactionDao {
     @Insert // Добавление записи в бд
     suspend fun insertTransaction(transaction: TransactionEntity)
 
+    @Query("DELETE FROM transactions")
+    suspend fun clearAllTransactions()
+
     @Query("SELECT * FROM transactions ORDER BY id DESC")
     fun getAllTransaction(): Flow<List<TransactionEntity>>
 
