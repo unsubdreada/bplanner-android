@@ -3,8 +3,12 @@ package com.unsubdreada.myapp.ui.components
 import TablerCalendar
 import TablerCancel
 import TablerMoneybagMinus
+import TablerScanEye
 import TablerTrash
+import android.Manifest
 import android.app.DatePickerDialog
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,9 +16,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -38,6 +42,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -55,6 +60,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
 import com.unsubdreada.myapp.data.TransactionEntity
 import com.unsubdreada.myapp.model.CurrencyType
 import com.unsubdreada.myapp.model.FinanceCategory
@@ -92,8 +99,17 @@ fun TransactionBottomSheet(
     var amountInput by remember { mutableStateOf(transactionEdit?.amount?.toString() ?: "") }
     val types = listOf(
         "Доход" to TablerMoneybagPlus,
+        "Сканер" to TablerScanEye,
         "Расход" to TablerMoneybagMinus
     )
+
+    var showQrScanner by remember { mutableStateOf(false) }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) showQrScanner = true
+    }
 
     var selectedCurrency by remember {
         mutableStateOf(transactionEdit?.currencyCode ?: defaultCurrency)
@@ -160,10 +176,27 @@ fun TransactionBottomSheet(
         }
     }
 
+    if (showQrScanner) {
+        Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
+            QrScannerView(
+                onScanResult = { raw ->
+                    showQrScanner = false
+                    parseReceiptQr(raw)?.let { (date, amount) ->
+                        selectedType = false
+                        amountInput = amount.toBigDecimal().stripTrailingZeros().toPlainString()
+                        selectedDate = date
+                    }
+                },
+                onDismiss = { showQrScanner = false }
+            )
+        }
+        return
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = PrimaryDark,
-        sheetState = sheetState
+        sheetState = sheetState,
     ) {
         Column(
             modifier = Modifier
@@ -176,34 +209,46 @@ fun TransactionBottomSheet(
                 tonalElevation = 0.dp
             ) {
                 types.forEachIndexed { index, type ->
-                    val isSelected =
-                        (index == 0 && selectedType) || (index == 1 && !selectedType)
                     val (title, icon) = type
-
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = { selectedType = (index == 0) },
-                        label = {
-                            Text(
-                                text = title,
-                                fontSize = 15.sp
+                    when (index) {
+                        1 -> NavigationBarItem(
+                            selected = false,
+                            onClick = {
+                                val hasCameraPermission = ContextCompat.checkSelfPermission(
+                                    context, Manifest.permission.CAMERA
+                                ) == PermissionChecker.PERMISSION_GRANTED
+                                if (hasCameraPermission) showQrScanner = true
+                                else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            },
+                            label = { Text(text = title, fontSize = 15.sp) },
+                            icon = { Icon(imageVector = icon, contentDescription = title) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = TextSecondary,
+                                selectedTextColor = TextSecondary,
+                                unselectedIconColor = TextSecondary,
+                                unselectedTextColor = TextSecondary,
+                                indicatorColor = Color.Transparent
                             )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = title,
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = if (selectedType) ButtonIncomeBackground else ButtonExpenseBackground,
-                            selectedTextColor = if (selectedType) TextIncome else TextExpense,
-                            unselectedIconColor = TextSecondary,
-                            unselectedTextColor = TextSecondary,
-                            indicatorColor = Color.Transparent
                         )
 
-                    )
+                        else -> {
+                            val isSelected =
+                                (index == 0 && selectedType) || (index == 2 && !selectedType)
+                            NavigationBarItem(
+                                selected = isSelected,
+                                onClick = { selectedType = (index == 0) },
+                                label = { Text(text = title, fontSize = 15.sp) },
+                                icon = { Icon(imageVector = icon, contentDescription = title) },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = if (selectedType) ButtonIncomeBackground else ButtonExpenseBackground,
+                                    selectedTextColor = if (selectedType) TextIncome else TextExpense,
+                                    unselectedIconColor = TextSecondary,
+                                    unselectedTextColor = TextSecondary,
+                                    indicatorColor = Color.Transparent
+                                )
+                            )
+                        }
+                    }
                 }
             }
 
@@ -212,8 +257,7 @@ fun TransactionBottomSheet(
             LazyRow(
                 state = carouselState,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(horizontal = 24.dp)
             ) {
@@ -365,7 +409,8 @@ fun TransactionBottomSheet(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
             ) {
                 Button(
                     onClick = {
@@ -413,8 +458,7 @@ fun TransactionBottomSheet(
                     },
                     enabled = amountInput.isNotEmpty(),
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
+                        .fillMaxWidth(),
                     shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ButtonAcceptBackground,
@@ -431,4 +475,21 @@ fun TransactionBottomSheet(
             }
         }
     }
+}
+
+private fun parseReceiptQr(raw: String): Pair<String, Double>? {
+    val params = raw.split("&").mapNotNull {
+        val parts = it.split("=", limit = 2)
+        if (parts.size == 2) parts[0] to parts[1] else null
+    }.toMap()
+
+    val rawDate = params["t"] ?: return null
+    val amount = params["s"]?.toDoubleOrNull() ?: return null
+
+    // 20260621T1810 -> 2026-06-21
+    val datePart = rawDate.substringBefore("T")
+    if (datePart.length < 8) return null
+    val date = "${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6, 8)}"
+
+    return date to amount
 }
