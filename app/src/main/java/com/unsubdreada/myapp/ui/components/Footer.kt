@@ -1,6 +1,7 @@
 package com.unsubdreada.myapp.ui.components
 
 import TablerChartBar
+import TablerCoins
 import TablerHistory
 import TablerSettings
 import androidx.compose.foundation.layout.height
@@ -36,6 +37,7 @@ fun Footer(
     val items = listOf(
         "История" to TablerHistory,
         "График" to TablerChartBar,
+        "Бюджет" to TablerCoins,
         "Настройки" to TablerSettings
     )
 

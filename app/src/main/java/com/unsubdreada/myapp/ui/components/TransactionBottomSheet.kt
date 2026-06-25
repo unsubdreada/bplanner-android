@@ -2,7 +2,9 @@ package com.unsubdreada.myapp.ui.components
 
 import TablerCalendar
 import TablerCancel
+import TablerDeviceFloppy
 import TablerMoneybagMinus
+import TablerPencil
 import TablerScanEye
 import TablerTrash
 import android.Manifest
@@ -19,12 +21,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AssistChip
@@ -36,6 +38,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
@@ -66,19 +69,16 @@ import com.unsubdreada.myapp.data.TransactionEntity
 import com.unsubdreada.myapp.model.CurrencyType
 import com.unsubdreada.myapp.model.FinanceCategory
 import com.unsubdreada.myapp.ui.theme.BlurredPanelBackground
-import com.unsubdreada.myapp.ui.theme.ButtonAcceptBackground
-import com.unsubdreada.myapp.ui.theme.ButtonAcceptText
-import com.unsubdreada.myapp.ui.theme.ButtonCancelBackground
-import com.unsubdreada.myapp.ui.theme.ButtonCancelText
-import com.unsubdreada.myapp.ui.theme.ButtonDisabledBackground
-import com.unsubdreada.myapp.ui.theme.ButtonDisabledText
 import com.unsubdreada.myapp.ui.theme.ButtonExpenseBackground
 import com.unsubdreada.myapp.ui.theme.ButtonIncomeBackground
 import com.unsubdreada.myapp.ui.theme.InputFieldBackground
 import com.unsubdreada.myapp.ui.theme.InputTextPlaceholder
 import com.unsubdreada.myapp.ui.theme.PrimaryDark
+import com.unsubdreada.myapp.ui.theme.RedBackground
+import com.unsubdreada.myapp.ui.theme.TextAdditional
 import com.unsubdreada.myapp.ui.theme.TextExpense
 import com.unsubdreada.myapp.ui.theme.TextIncome
+import com.unsubdreada.myapp.ui.theme.TextPrimary
 import com.unsubdreada.myapp.ui.theme.TextSecondary
 import com.unsubdreada.myapp.ui.theme.icons.TablerMoneybagPlus
 import java.text.SimpleDateFormat
@@ -333,16 +333,24 @@ fun TransactionBottomSheet(
 
                         DropdownMenu(
                             expanded = isCurrencyMenuExpanded,
-                            onDismissRequest = { isCurrencyMenuExpanded = false }
+                            onDismissRequest = { isCurrencyMenuExpanded = false },
+                            containerColor = PrimaryDark.copy(0.9f)
                         ) {
                             CurrencyType.entries.forEach { currency ->
                                 DropdownMenuItem(
                                     text = {
-                                        Row() {
-                                            Text(currency.title)
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = currency.title,
+                                                color = TextPrimary
+                                            )
                                             Icon(
                                                 imageVector = currency.symbol,
-                                                contentDescription = null
+                                                contentDescription = null,
+                                                tint = TextPrimary
                                             )
                                         }
                                     },
@@ -404,27 +412,31 @@ fun TransactionBottomSheet(
                 ),
             )
 
-            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(
+                Modifier.padding(top = 10.dp),
+                thickness = 2.dp,
+                color = TextSecondary.copy(0.5f)
+            )
 
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(
                     onClick = {
                         onDismiss()
                     },
-                    shape = CircleShape,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonCancelBackground,
-                        contentColor = ButtonCancelText,
+                        containerColor = Color.Transparent
                     )
                 ) {
                     Icon(
                         imageVector = TablerCancel,
-                        contentDescription = "Отмена"
+                        contentDescription = null,
+                        tint = TextSecondary
                     )
                 }
 
@@ -432,18 +444,21 @@ fun TransactionBottomSheet(
                     Button(
                         onClick = { onDeleteClick(transactionEdit) },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = ButtonCancelBackground,
+                            containerColor = Color.Transparent
                         )
                     ) {
                         Icon(
                             imageVector = TablerTrash,
                             contentDescription = null,
-                            tint = ButtonExpenseBackground
+                            tint = RedBackground
                         )
                     }
                 }
 
                 Button(
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent
+                    ),
                     onClick = {
                         val cleanInput = amountInput.trim().replace(",", ".")
                         val amount = cleanInput.toDoubleOrNull() ?: 0.0
@@ -456,20 +471,12 @@ fun TransactionBottomSheet(
                             selectedCurrency
                         )
                     },
-                    enabled = amountInput.isNotEmpty(),
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonAcceptBackground,
-                        contentColor = ButtonAcceptText,
-                        disabledContainerColor = ButtonDisabledBackground,
-                        disabledContentColor = ButtonDisabledText
-                    )
+                    enabled = amountInput.isNotEmpty()
                 ) {
-                    Text(
-                        text = if (transactionEdit != null) "Сохранить" else "Добавить",
-                        fontSize = 16.sp
+                    Icon(
+                        imageVector = if (transactionEdit != null) TablerDeviceFloppy else TablerPencil,
+                        contentDescription = null,
+                        tint = TextAdditional
                     )
                 }
             }

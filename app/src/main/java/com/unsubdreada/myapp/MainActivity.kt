@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.unsubdreada.myapp.ui.components.Footer
+import com.unsubdreada.myapp.ui.screens.BudgetScreen
 import com.unsubdreada.myapp.ui.screens.ChartScreen
 import com.unsubdreada.myapp.ui.screens.MainFinanceScreen
 import com.unsubdreada.myapp.ui.screens.SettingsScreen
@@ -69,7 +70,8 @@ class MainActivity : ComponentActivity() {
                             }
 
                             1 -> ChartScreen(innerPadding = innerPadding)
-                            2 -> SettingsScreen(innerPadding = innerPadding)
+                            2 -> BudgetScreen(innerPadding = innerPadding)
+                            3 -> SettingsScreen(innerPadding = innerPadding)
                         }
                     }
                 }
