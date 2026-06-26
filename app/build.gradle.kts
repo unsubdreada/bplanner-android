@@ -66,4 +66,7 @@ dependencies {
     implementation(libs.mlkit.barcode)
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
+    implementation(libs.haze)
+    implementation(libs.haze.blur)
+    implementation(libs.haze.blur.materials)
 }

@@ -1,14 +1,13 @@
 package com.unsubdreada.myapp.ui.screens
 
-import TablerCurrencyRubel
 import TablerPlusMinus
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,7 +18,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -29,8 +30,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.unsubdreada.myapp.data.AppDatabase
 import com.unsubdreada.myapp.data.TransactionEntity
 import com.unsubdreada.myapp.model.CurrencyType
@@ -44,6 +49,9 @@ import com.unsubdreada.myapp.ui.components.TransactionItem
 import com.unsubdreada.myapp.ui.theme.ButtonAcceptBackground
 import com.unsubdreada.myapp.ui.theme.ButtonAcceptText
 import com.unsubdreada.myapp.ui.theme.TextPrimary
+import com.unsubdreada.myapp.ui.theme.TextSecondary
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 
 
@@ -51,8 +59,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainFinanceScreen(
     innerPadding: PaddingValues,
-    defaultCurrency: String
+    defaultCurrency: String,
+    onScrollToTop: (() -> Unit) -> Unit
 ) {
+    var headerHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+    val hazeState = remember { HazeState() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val db = remember { AppDatabase.getDatabase(context) }
@@ -98,80 +110,110 @@ fun MainFinanceScreen(
 
     var editingTransaction by remember { mutableStateOf<TransactionEntity?>(null) } // Редактируемая запись, null - при добавлении записи
 
+    LaunchedEffect(Unit) {
+        onScrollToTop {
+            scope.launch {
+                scrollState.animateScrollToItem(0)
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
+        LazyColumn(
+            state = scrollState,
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(hazeState),
+            contentPadding = PaddingValues(
+                top = headerHeight,
+                bottom = innerPadding.calculateBottomPadding() + 16.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            LazyColumn(
-                state = scrollState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                stickyHeader {
-                    Header(
-                        isSelectedMode = isSelectedMode,
-                        onDeleteClick = {
-                            scope.launch {
-                                dao.delTransactionsById(selectedIds.toList())
-                                selectedIds = emptySet()
-                            }
-                        },
-                        searchText = searchQuery,
-                        onSearchTextExchange = { searchQuery = it },
-                        selectedCategory = selectedCategoryFilter,
-                        onCategorySelect = { selectedCategoryFilter = it },
-                        availableFilters = existingCategoryTitle,
-                        onSortClick = {
-                            showSortSheet = true
-                        },
-                        isSearchVisible = isSearchVisible,
-                        scope = scope,
-                        scrollState = scrollState,
-                        allTransactions = allTransactions
-                    )
+            items(
+                items = transactionList,
+                key = { transaction -> transaction.id }
+            ) { transaction ->
+                val category = remember(transaction.category) {
+                    runCatching { FinanceCategory.valueOf(transaction.category) }
+                        .getOrElse { FinanceCategory.OTHER_EXP }
                 }
-                items(
-                    items = transactionList,
-                    key = { transaction -> transaction.id }
-                ) { transaction ->
-                    val category = remember(transaction.category) {
-                        runCatching { FinanceCategory.valueOf(transaction.category) }
-                            .getOrElse { FinanceCategory.OTHER_EXP }
-                    }
-                    val isCurrentSelect = selectedIds.contains(transaction.id)
-                    val transactionCurrencySymbol = remember(transaction.currencyCode) {
-                        runCatching { CurrencyType.valueOf(transaction.currencyCode).symbol }.getOrElse { TablerCurrencyRubel }
-                    }
+                val isCurrentSelect = selectedIds.contains(transaction.id)
+                val transactionCurrencySymbol = remember(transaction.currencyCode) {
+                    runCatching { CurrencyType.valueOf(transaction.currencyCode).stringSymbol }.getOrElse { "₽" }
+                }
 
 
-                    TransactionItem(
-                        transaction = transaction,
-                        isSelectedMode = isCurrentSelect,
-                        onLongClick = {
-                            if (!isSelectedMode) selectedIds = selectedIds + transaction.id
-                        },
-                        onClick = {
-                            if (isSelectedMode) {
-                                selectedIds = if (selectedIds.contains(transaction.id)) {
-                                    selectedIds - transaction.id
-                                } else {
-                                    selectedIds + transaction.id
-                                }
+                TransactionItem(
+                    transaction = transaction,
+                    isSelectedMode = isCurrentSelect,
+                    onLongClick = {
+                        if (!isSelectedMode) selectedIds = selectedIds + transaction.id
+                    },
+                    onClick = {
+                        if (isSelectedMode) {
+                            selectedIds = if (selectedIds.contains(transaction.id)) {
+                                selectedIds - transaction.id
                             } else {
-                                editingTransaction = transaction
-                                showSheet = true
+                                selectedIds + transaction.id
                             }
-                        },
-                        category = category,
-                        currencySymbol = transactionCurrencySymbol
+                        } else {
+                            editingTransaction = transaction
+                            showSheet = true
+                        }
+                    },
+                    category = category,
+                    currencyStringSymbol = transactionCurrencySymbol
+                )
+            }
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 10.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    Text(
+                        text = "Нажмите + для новой записи",
+                        color = TextSecondary,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
         }
+
+        Header(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .onGloballyPositioned { coords ->
+                    headerHeight = with(density) { coords.size.height.toDp() }
+                },
+            isSelectedMode = isSelectedMode,
+            onDeleteClick = {
+                scope.launch {
+                    dao.delTransactionsById(selectedIds.toList())
+                    selectedIds = emptySet()
+                }
+            },
+            searchText = searchQuery,
+            onSearchTextExchange = { searchQuery = it },
+            selectedCategory = selectedCategoryFilter,
+            onCategorySelect = { selectedCategoryFilter = it },
+            availableFilters = existingCategoryTitle,
+            onSortClick = {
+                showSortSheet = true
+            },
+            isSearchVisible = isSearchVisible,
+            scope = scope,
+            scrollState = scrollState,
+            allTransactions = allTransactions,
+            hazeState = hazeState
+        )
+
 
         Row(
             modifier = Modifier

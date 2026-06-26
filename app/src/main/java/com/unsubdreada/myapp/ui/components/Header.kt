@@ -18,14 +18,20 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -39,16 +45,19 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
@@ -63,9 +72,13 @@ import com.unsubdreada.myapp.model.FinanceCategory
 import com.unsubdreada.myapp.ui.theme.AccentBlue
 import com.unsubdreada.myapp.ui.theme.InputFieldBackground
 import com.unsubdreada.myapp.ui.theme.InputFieldStrokeFocused
-import com.unsubdreada.myapp.ui.theme.PrimaryDark
+import com.unsubdreada.myapp.ui.theme.ScreenBackground
 import com.unsubdreada.myapp.ui.theme.TextPrimary
 import com.unsubdreada.myapp.ui.theme.TextSecondary
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.blur.blurEffect
+import dev.chrisbanes.haze.blur.materials.HazeMaterials
+import dev.chrisbanes.haze.hazeEffect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -74,6 +87,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Header(
+    modifier: Modifier = Modifier,
     isSelectedMode: Boolean,
     onDeleteClick: () -> Unit,
     searchText: String,
@@ -85,7 +99,8 @@ fun Header(
     isSearchVisible: Boolean,
     scope: CoroutineScope,
     scrollState: LazyListState,
-    allTransactions: List<TransactionEntity>
+    allTransactions: List<TransactionEntity>,
+    hazeState: HazeState
 ) {
     val focusManager = LocalFocusManager.current
     val carouselState = rememberLazyListState()
@@ -93,237 +108,294 @@ fun Header(
         listOf("Все") + availableFilters
     }
     val searchFocus = remember { FocusRequester() }
+    val hazeStyle = HazeMaterials.ultraThin(ScreenBackground)
+    val showStartGradient by remember {
+        derivedStateOf { carouselState.firstVisibleItemIndex > 0 || carouselState.firstVisibleItemScrollOffset > 0 }
+    }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(PrimaryDark.copy(0.9f))
-            .padding(10.dp)
+        modifier = modifier
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .hazeEffect(state = hazeState) {
+                    blurEffect {
+                        style = hazeStyle
+                        blurredEdgeTreatment
+                    }
+                },
         ) {
-            Text(
-                text = "BPlanner",
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                color = TextPrimary
-            )
+            Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
 
-            if (isSelectedMode) {
-                IconButton(
-                    onClick = onDeleteClick,
-                    modifier = Modifier.minimumInteractiveComponentSize()
-                ) {
-                    Icon(
-                        imageVector = TablerTrash,
-                        contentDescription = "Удалить выбранное",
-                        tint = TextPrimary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            } else {
-                AnimatedVisibility(
-                    visible = !isSearchVisible,
-                    enter = scaleIn() + expandHorizontally(),
-                    exit = scaleOut() + shrinkHorizontally()
-                ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(50.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "BPlanner",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = TextPrimary
+                )
+
+                if (isSelectedMode) {
                     IconButton(
-                        onClick = {
-                            scope.launch {
-                                scrollState.animateScrollToItem(0)
-                                delay(50.milliseconds)
-                                searchFocus.requestFocus()
-                            }
-                        }
+                        onClick = onDeleteClick,
+                        modifier = Modifier.minimumInteractiveComponentSize()
                     ) {
                         Icon(
-                            imageVector = TablerSearch,
-                            contentDescription = null,
+                            imageVector = TablerTrash,
+                            contentDescription = "Удалить выбранное",
                             tint = TextPrimary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                }
-            }
-        }
-
-        AnimatedVisibility(
-            visible = isSearchVisible,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            BasicTextField(
-                singleLine = true,
-                value = searchText,
-                onValueChange = onSearchTextExchange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .focusRequester(searchFocus),
-                cursorBrush = SolidColor(TextSecondary),
-                textStyle = TextStyle(color = TextSecondary, fontSize = 14.sp),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Search,
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        focusManager.clearFocus()
-                    }
-                ),
-                decorationBox = { innerTextField ->
-                    TextFieldDefaults.DecorationBox(
-                        value = searchText,
-                        innerTextField = innerTextField,
-                        enabled = true,
-                        singleLine = true,
-                        visualTransformation = VisualTransformation.None,
-                        interactionSource = remember { MutableInteractionSource() },
-                        placeholder = {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Поиск по примечанию",
-                                    fontSize = 12.sp
-                                )
-                                Text(
-                                    text = "${allTransactions.size}",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                } else {
+                    AnimatedVisibility(
+                        visible = !isSearchVisible,
+                        enter = scaleIn() + expandHorizontally(),
+                        exit = scaleOut() + shrinkHorizontally()
+                    ) {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    scrollState.animateScrollToItem(0)
+                                    delay(50.milliseconds)
+                                    searchFocus.requestFocus()
+                                }
                             }
-                        },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                        colors = TextFieldDefaults.colors(
-                            unfocusedContainerColor = InputFieldBackground,
-                            unfocusedPlaceholderColor = TextSecondary,
-                            focusedContainerColor = InputFieldBackground,
-                            cursorColor = TextSecondary,
-                            focusedTextColor = TextSecondary,
-                            unfocusedTextColor = TextSecondary,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        ),
-                        shape = CircleShape,
-                        leadingIcon = {
+                        ) {
                             Icon(
                                 imageVector = TablerSearch,
                                 contentDescription = null,
-                                tint = TextSecondary
+                                tint = TextPrimary,
+                                modifier = Modifier.size(20.dp)
                             )
-                        },
-                        trailingIcon = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy((-15).dp)
-                            ) {
-                                if (searchText.isNotEmpty()) {
+                        }
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = isSearchVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                BasicTextField(
+                    singleLine = true,
+                    value = searchText,
+                    onValueChange = onSearchTextExchange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .padding(horizontal = 16.dp)
+                        .focusRequester(searchFocus),
+                    cursorBrush = SolidColor(TextSecondary),
+                    textStyle = TextStyle(color = TextSecondary, fontSize = 14.sp),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Search,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            focusManager.clearFocus()
+                        }
+                    ),
+                    decorationBox = { innerTextField ->
+                        TextFieldDefaults.DecorationBox(
+                            value = searchText,
+                            innerTextField = innerTextField,
+                            enabled = true,
+                            singleLine = true,
+                            visualTransformation = VisualTransformation.None,
+                            interactionSource = remember { MutableInteractionSource() },
+                            placeholder = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Поиск по примечанию",
+                                        fontSize = 12.sp
+                                    )
+                                    Text(
+                                        text = "${allTransactions.size}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                            colors = TextFieldDefaults.colors(
+                                unfocusedContainerColor = InputFieldBackground,
+                                unfocusedPlaceholderColor = TextSecondary,
+                                focusedContainerColor = InputFieldBackground,
+                                cursorColor = TextSecondary,
+                                focusedTextColor = TextSecondary,
+                                unfocusedTextColor = TextSecondary,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent
+                            ),
+                            shape = CircleShape,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = TablerSearch,
+                                    contentDescription = null,
+                                    tint = TextSecondary
+                                )
+                            },
+                            trailingIcon = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy((-15).dp)
+                                ) {
+                                    if (searchText.isNotEmpty()) {
+                                        IconButton(
+                                            onClick = {
+                                                onSearchTextExchange("")
+                                                focusManager.clearFocus()
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = TablerX,
+                                                contentDescription = null,
+                                                tint = TextSecondary
+                                            )
+                                        }
+                                    }
                                     IconButton(
                                         onClick = {
-                                            onSearchTextExchange("")
-                                            focusManager.clearFocus()
+                                            onSortClick()
                                         }
                                     ) {
                                         Icon(
-                                            imageVector = TablerX,
+                                            imageVector = TablerArrowsSort,
                                             contentDescription = null,
                                             tint = TextSecondary
                                         )
                                     }
                                 }
-                                IconButton(
-                                    onClick = {
-                                        onSortClick()
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = TablerArrowsSort,
-                                        contentDescription = null,
-                                        tint = TextSecondary
-                                    )
-                                }
                             }
-                        }
-                    )
-                }
-            )
-        }
-    }
-
-    Spacer(Modifier.height(5.dp))
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(45.dp)
-            .padding(horizontal = 10.dp),
-        shape = CircleShape,
-        color = InputFieldBackground.copy(0.9f)
-    ) {
-        LazyRow(
-            state = carouselState,
-            modifier = Modifier.padding(5.dp)
-        ) {
-            items(filteredCategory) { categoryTitle ->
-                val isSelected = if (categoryTitle == "Все") {
-                    selectedCategory.isEmpty()
-                } else {
-                    selectedCategory == categoryTitle
-                }
-
-                FilterChip(
-                    selected = isSelected,
-                    onClick = {
-                        if (categoryTitle == "Все") {
-                            onCategorySelect("")
-                        } else {
-                            onCategorySelect(if (isSelected) "" else categoryTitle)
-                        }
-                    },
-                    label = {
-                        Text(
-                            text = categoryTitle,
-                            fontSize = 12.sp
                         )
-                    },
-                    shape = CircleShape,
-                    leadingIcon = {
-                        val iconVector = if (categoryTitle == "Все") {
-                            TablerInfinity
-                        } else {
-                            FinanceCategory.entries.find { it.title == categoryTitle }?.icon
-                                ?: TablerDots
-                        }
-                        Icon(
-                            imageVector = iconVector,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        labelColor = TextSecondary,
-                        selectedLabelColor = AccentBlue,
-                        selectedContainerColor = InputFieldStrokeFocused.copy(alpha = 0.15f),
-                        disabledLeadingIconColor = TextSecondary,
-                        selectedLeadingIconColor = AccentBlue,
-                        iconColor = TextSecondary
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = isSelected,
-                        borderColor = Color.Transparent,
-                        selectedBorderWidth = 0.dp,
-                        borderWidth = 2.dp
-                    )
+                    }
                 )
             }
+        }
+
+        Spacer(Modifier.height(5.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(45.dp)
+                .padding(horizontal = 10.dp)
+                .clip(CircleShape)
+                .hazeEffect(state = hazeState) {
+                    blurEffect {
+                        style = hazeStyle
+                        blurredEdgeTreatment
+                    }
+                },
+        ) {
+            LazyRow(
+                state = carouselState,
+                modifier = Modifier
+                    .padding(5.dp)
+
+            ) {
+                items(filteredCategory) { categoryTitle ->
+                    val isSelected = if (categoryTitle == "Все") {
+                        selectedCategory.isEmpty()
+                    } else {
+                        selectedCategory == categoryTitle
+                    }
+
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            if (categoryTitle == "Все") {
+                                onCategorySelect("")
+                            } else {
+                                onCategorySelect(if (isSelected) "" else categoryTitle)
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = categoryTitle,
+                                fontSize = 12.sp
+                            )
+                        },
+                        shape = CircleShape,
+                        leadingIcon = {
+                            val iconVector = if (categoryTitle == "Все") {
+                                TablerInfinity
+                            } else {
+                                FinanceCategory.entries.find { it.title == categoryTitle }?.icon
+                                    ?: TablerDots
+                            }
+                            Icon(
+                                imageVector = iconVector,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            labelColor = TextSecondary,
+                            selectedLabelColor = AccentBlue,
+                            selectedContainerColor = InputFieldStrokeFocused.copy(alpha = 0.15f),
+                            disabledLeadingIconColor = TextSecondary,
+                            selectedLeadingIconColor = AccentBlue,
+                            iconColor = TextSecondary
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = Color.Transparent,
+                            selectedBorderWidth = 0.dp,
+                            borderWidth = 2.dp
+                        )
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+            ) {
+                this@Column.AnimatedVisibility(
+                    visible = showStartGradient,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(48.dp)
+                            .fillMaxHeight()
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(ScreenBackground, Color.Transparent)
+                                )
+                            )
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .width(48.dp)
+                    .fillMaxHeight()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(Color.Transparent, ScreenBackground)
+                        )
+                    )
+            )
         }
     }
 }

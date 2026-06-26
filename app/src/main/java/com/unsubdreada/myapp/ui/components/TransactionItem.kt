@@ -27,13 +27,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unsubdreada.myapp.data.TransactionEntity
 import com.unsubdreada.myapp.model.FinanceCategory
 import com.unsubdreada.myapp.ui.theme.PrimaryDark
+import com.unsubdreada.myapp.ui.theme.TextAdditional
 import com.unsubdreada.myapp.ui.theme.TextExpense
 import com.unsubdreada.myapp.ui.theme.TextIncome
 import com.unsubdreada.myapp.ui.theme.TextPrimary
@@ -46,7 +48,7 @@ import java.util.Locale
 fun TransactionItem(
     transaction: TransactionEntity,
     category: FinanceCategory,
-    currencySymbol: ImageVector,
+    currencyStringSymbol: String,
     isSelectedMode: Boolean,
     onLongClick: () -> Unit,
     onClick: () -> Unit
@@ -79,31 +81,39 @@ fun TransactionItem(
     ) {
         Surface(
             modifier = Modifier.size(50.dp),
-            shape = CircleShape
+            shape = CircleShape,
+            color = Color.Transparent
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         if (!isSelectedMode) {
-                            category.color
+                            category.color.copy(0.15f)
                         } else {
-                            category.color.copy(alpha = 0.5f)
+                            TextAdditional
                         }
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
+                    modifier = Modifier.scale(0.9f, 1.0f),
                     imageVector = if (!isSelectedMode) {
                         category.icon
                     } else {
                         TablerCheck
                     },
                     contentDescription = null,
-                    tint = Color.DarkGray
+                    tint =
+                        if (!isSelectedMode) {
+                            category.color
+                        } else {
+                            Color.White
+                        }
                 )
             }
         }
+
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -112,7 +122,8 @@ fun TransactionItem(
         ) {
             Text(
                 text = category.title,
-                fontSize = 18.sp,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Light,
                 color = TextPrimary
             )
             Spacer(Modifier.height(5.dp))
@@ -120,6 +131,7 @@ fun TransactionItem(
                 text = transaction.comment,
                 color = TextSecondary,
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Light,
                 style = MaterialTheme.typography.labelMedium
             )
         }
@@ -155,17 +167,14 @@ fun TransactionItem(
                 )
             )
 
-            Row() {
+            Row(
+                horizontalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    text = "%.2f".format(Locale.US, transaction.amount),
+                    text = "%.2f $currencyStringSymbol".format(Locale.US, transaction.amount),
                     fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
                     color = if (transaction.isIncome) TextIncome else TextExpense
-                )
-
-                Icon(
-                    imageVector = currencySymbol,
-                    contentDescription = null,
-                    tint = if (transaction.isIncome) TextIncome else TextExpense
                 )
             }
         }

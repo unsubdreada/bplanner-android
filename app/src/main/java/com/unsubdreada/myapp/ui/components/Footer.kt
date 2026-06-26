@@ -26,33 +26,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unsubdreada.myapp.ui.theme.AccentBlue
-import com.unsubdreada.myapp.ui.theme.BlurredPanelBackground
+import com.unsubdreada.myapp.ui.theme.ScreenBackground
 import com.unsubdreada.myapp.ui.theme.TextPrimary
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.blur.blurEffect
+import dev.chrisbanes.haze.blur.materials.HazeMaterials
+import dev.chrisbanes.haze.hazeEffect
 
 @Composable
 fun Footer(
     selectedItem: Int,
-    onTabSelected: (Int) -> Unit
+    onTabSelected: (Int) -> Unit,
+    onTabReselected: (Int) -> Unit,
+    hazeState: HazeState
 ) {
     val items = listOf(
         "История" to TablerHistory,
         "График" to TablerChartBar,
-        "Бюджет" to TablerCoins,
+        "Цели" to TablerCoins,
         "Настройки" to TablerSettings
     )
+    val hazeStyle = HazeMaterials.ultraThin(ScreenBackground)
 
     Surface(
         modifier = Modifier
             .navigationBarsPadding()
             .padding(16.dp, 0.dp, 16.dp, 16.dp)
             .shadow(elevation = 8.dp, shape = RoundedCornerShape(24.dp))
-            .clip(RoundedCornerShape(24.dp))
-            .height(54.dp),
+            .clip(RoundedCornerShape(30.dp))
+            .height(64.dp)
+            .hazeEffect(state = hazeState) {
+                blurEffect {
+                    style = hazeStyle
+                    blurredEdgeTreatment
+                }
+            },
         color = Color.Transparent,
         shape = CircleShape,
     ) {
         NavigationBar(
-            containerColor = BlurredPanelBackground,
+            containerColor = Color.Transparent,
             tonalElevation = 0.dp
         ) {
             items.forEachIndexed { index, item ->
@@ -61,12 +74,15 @@ fun Footer(
 
                 NavigationBarItem(
                     selected = isSelected,
-                    onClick = { onTabSelected(index) },
+                    onClick = {
+                        if (index == selectedItem) onTabReselected(index)
+                        else onTabSelected(index)
+                    },
                     modifier = Modifier.weight(1f),
                     label = {
                         Text(
                             text = title,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Light,
                             modifier = Modifier.offset(y = (-3).dp)
                         )
@@ -76,7 +92,7 @@ fun Footer(
                             imageVector = iconVector,
                             contentDescription = title,
                             modifier = Modifier
-                                .size(20.dp)
+                                .size(24.dp)
                                 .offset(y = 3.dp)
                         )
                     },
